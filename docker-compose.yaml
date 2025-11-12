@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: messagesdb
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+
+  sync:
+    build: ./populator    # folder with your Dockerfile + sync.py
+    container_name: sync
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: "mongodb://root:example@mongo:27017/messagesdb?authSource=admin"
+      MEMBERS_URL: "https://november7-730026606190.europe-west1.run.app/messages/"
+      SYNC_INTERVAL: "60"
+
+
+
+
+volumes:
+  mongo_data:
+
