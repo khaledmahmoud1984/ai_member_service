@@ -16,13 +16,14 @@ print("interval:%s" %(interval))
 
 client = MongoClient(mongo_uri)
 db = client.get_default_database()
-
+#ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 def get_message_count(db, key="global") -> int:
-    doc = db.messages_info.find_one({"_id": key}, {"count": 1, "_id": 0})
-    return int(doc["count"])
+    cnt = db.message.count_documents({})
+    return cnt
 
 
 def get_remote_message_count(url=members_url, timeout=15) -> int:
+    print(url)
     r = requests.get(url, params={"limit": 0}, timeout=timeout)
     r.raise_for_status()
     return int(r.json().get("total", 0))
@@ -48,4 +49,5 @@ if(message_count == remote_message_count):
 
 messages_json=get_messages(skip,limit)
 items=messages_json.get("items")
+db.message.insert_many(items)
 

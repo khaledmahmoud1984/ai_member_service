@@ -25,9 +25,20 @@ services:
       MEMBERS_URL: "https://november7-730026606190.europe-west1.run.app/messages/"
       SYNC_INTERVAL: "60"
 
-
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    entrypoint: ["/usr/local/bin/start.sh"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./start.sh:/usr/local/bin/start.sh:ro
+      - ollama:/root/.ollama
+    command: ["bash","-lc","bash /usr/local/bin/start.sh"]
 
 
 volumes:
   mongo_data:
+  ollama:
 
