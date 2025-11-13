@@ -2,8 +2,8 @@ import os
 import requests
 import sys
 from pymongo import MongoClient
-
-
+import ollama
+ollama.pull("mxbai-embed-large")   # runs once at startup
 mongo_uri = os.getenv("MONGO_URL","mongodb://root:example@localhost:27017/messagesdb?authSource=admin")
 members_url=os.getenv("MEMBERS_URL","https://november7-730026606190.europe-west1.run.app/messages/")
 interval=int(os.getenv("SYNC_INTERVAL","120"))
@@ -16,7 +16,7 @@ print("interval:%s" %(interval))
 
 client = MongoClient(mongo_uri)
 db = client.get_default_database()
-#ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+#db.message.delete_many({})
 def get_message_count(db, key="global") -> int:
     cnt = db.message.count_documents({})
     return cnt
@@ -49,5 +49,14 @@ if(message_count == remote_message_count):
 
 messages_json=get_messages(skip,limit)
 items=messages_json.get("items")
+
+for m in items:
+    resp = ollama.embed(
+        model="mxbai-embed-large",   # or nomic-embed-text, etc.
+        input=m["message"],
+    )
+    m["embedding"] = resp["embeddings"][0]
+
 db.message.insert_many(items)
+
 
