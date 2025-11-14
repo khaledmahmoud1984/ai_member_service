@@ -21,7 +21,15 @@ db.message.createIndex({ id: 1 }, { unique: true });
 db.message.createIndex({ user_name: 1 });
 db.message.createIndex({ timestamp: -1 });
 
-db = db.getSiblingDB("messagesdb");
-db.createCollection("messages_info");
-db.messages_info.insertOne({ _id: "global", count: 0 });
 
+db.createUser({
+  user: "apiuser",
+  pwd: "apiuser",
+  roles: [{ role: "read", db: "messagesdb" }]
+});
+
+db.createUser({
+  user: "synchuser",
+  pwd: "synchuser",
+  roles: [{ role: "readWrite", db: "messagesdb" }]
+});

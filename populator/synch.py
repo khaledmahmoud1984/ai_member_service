@@ -2,28 +2,44 @@ import os
 import requests
 import sys
 from pymongo import MongoClient
-import ollama
-ollama.pull("mxbai-embed-large")   # runs once at startup
-mongo_uri = os.getenv("MONGO_URL","mongodb://root:example@localhost:27017/messagesdb?authSource=admin")
+print("Starting Synch Service")
+mongo_uri = os.getenv("MONGO_URI","mongodb://synchuser:synchuser@mongo:27017/messagesdb?authSource=messagesdb")
 members_url=os.getenv("MEMBERS_URL","https://november7-730026606190.europe-west1.run.app/messages/")
 interval=int(os.getenv("SYNC_INTERVAL","120"))
+
+api_embeddings_url=os.getenv("EMBEDDINGS_URL","http://localhost:11434/api/embeddings")
+api_embedding_name=os.getenv("EMBEDDINGS_NAME","mxbai-embed-large")
 
 print("Starting the Synch Script")
 print("mongo_uri:%s" %(mongo_uri))
 print("members_url:%s"%(members_url))
 print("interval:%s" %(interval))
 
-
+print("Gettig DB Connection")
 client = MongoClient(mongo_uri)
 db = client.get_default_database()
-#db.message.delete_many({})
+print("DB Connection Succeeded!")
+
+
+def get_embedding(text: str):
+    resp = requests.post(
+        api_embeddings_url,
+        json={
+            "model": api_embedding_name,
+            "prompt": text,
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    return data["embedding"]  # list[float]
+
 def get_message_count(db, key="global") -> int:
     cnt = db.message.count_documents({})
     return cnt
 
 
 def get_remote_message_count(url=members_url, timeout=15) -> int:
-    print(url)
     r = requests.get(url, params={"limit": 0}, timeout=timeout)
     r.raise_for_status()
     return int(r.json().get("total", 0))
@@ -51,12 +67,12 @@ messages_json=get_messages(skip,limit)
 items=messages_json.get("items")
 
 for m in items:
-    resp = ollama.embed(
-        model="mxbai-embed-large",   # or nomic-embed-text, etc.
-        input=m["message"],
-    )
-    m["embedding"] = resp["embeddings"][0]
+    text=m["message"]
+    print("Getting embedding for %s" %(message))
+    embedding = get_embedding(text)
+    m["embedding"] = embedding
 
+print("inserting items into the database")
 db.message.insert_many(items)
 
 

@@ -20,10 +20,13 @@ services:
     container_name: sync
     depends_on:
       - mongo
+      - ollama
     environment:
-      MONGO_URI: "mongodb://root:example@mongo:27017/messagesdb?authSource=admin"
+      MONGO_URI: "mongodb://synchuser:synchuser@mongo:27017/messagesdb?authSource=messagesdb"
       MEMBERS_URL: "https://november7-730026606190.europe-west1.run.app/messages/"
-      SYNC_INTERVAL: "60"
+      SYNC_INTERVAL: "60" 
+      EMBEDDINGS_URL: "http://ollama:11434/api/embeddings"
+      PYTHONUNBUFFERED: "1"
 
   ollama:
     image: ollama/ollama:latest
@@ -37,6 +40,19 @@ services:
       - ollama:/root/.ollama
     command: ["bash","-lc","bash /usr/local/bin/start.sh"]
 
+  rest:
+    build: ./rest
+    container_name: rest
+    depends_on:
+      - mongo
+      - ollama
+    ports:
+      - "7777:7777"
+    environment:
+      MONGO_URI: "mongodb://apiuser:apiuser@mongo:27017/messagesdb?authSource=messagesdb"
+      MEMBERS_URL: "https://november7-730026606190.europe-west1.run.app/messages/"
+      EMBEDDINGS_URL: "http://ollama:11434/api/embeddings"
+      CHAT_URL: "http://ollama:11434/api/chat"
 
 volumes:
   mongo_data:
