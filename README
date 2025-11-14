@@ -1,0 +1,46 @@
+# ai_member_service
+
+Web service that answers questions based on the message exchanges with its members. It uses LLM(s) to infer answers from message texts.
+
+
+High-Level Description:
+The query might include one or more users. Answer the questions is divided into multiple steps
+
+1. Ask an LLM model to infer the users mentioned in the questions
+2. From the datastore, fetch all messages related to those users.
+3. Calculate an embedding for the question text
+4. Compute the cosine similarity with each retrieved question and order in descending order
+5. Pick the top 30.
+6. Feed the top 30 messages with the question to the LLM model
+
+
+Design Details:
+
+Docker is used to isolate each service into a separate container. This also makes the setup cloud friendly as each service can request its own resources, and configured based on the demand of the business.
+
+Member messages are avaible through the API : https://november7-730026606190.europe-west1.run.app/messages/?skip=0&limit=3349. Instead of querying the API everytime the service is invoked, I decided to download all messages and store them in a nosql, mongodb database.
+
+A synchronization service will poll the API service periodically to check if there are new messages. At the time of synchronization, an embedding is created for each message.
+
+LLM Inference Model:qwen2.5:7b-instruct
+Embeddings Model:mxbai-embed-large
+
+Multi-shot prompting is used to provide the LLM examples on how to answer questions based on messages
+
+Example Service Invocation: http://localhost:7777/ask?question=who%20is%20vikram
+Answer:	{"answer":"Based on the provided messages, Vikram is an art consultant who requests various services such as chefs, personal shoppers, and more. However, his current location is not specified in any of the messages."}
+
+Assumptions Made:
+If the API had new messages, it will always be appended to the end of the return list
+
+Future:
+A question like who are the users that are interested in leaving Portland, Oregon?
+Current, the API does not support this. A username has to be extracted from the question. A modification is modify the prompt
+so that it can explicity say general and accordingly the code will fetch all users
+
+
+Considerations:
+
+==> I considered using a vector db to find the closest messages based on the query. Given the scope of the task and time provided, I decided to calculate to manually filter messages based on cosine similarity.
+
+==> I considered integrating with OpenAI ChatGPT APIs for inference. Cost-wise, this option would be cheaper and easier then hosting an actual LLM. However, due to privacy of the members, a hosted LLM would be a better idea. For PoC, ChatGPT API might be cheaper. I implemented the hosted LLM option 
