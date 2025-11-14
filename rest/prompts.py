@@ -7,7 +7,7 @@ from fastapi import FastAPI
 import uvicorn
 app = FastAPI()
 
-mongo_uri = os.getenv("MONGO_URI","mongodb://apiuser:apiuser@mongo:27017/messagesdb?authSource=messagesdb")
+mongo_uri = os.getenv("MONGO_URI","mongodb://apiuser:apiuser@localhost:27017/messagesdb?authSource=messagesdb")
 members_url=os.getenv("MEMBERS_URL","https://november7-730026606190.europe-west1.run.app/messages/")
 
 instruction="Find the person name where are asking about in [%s]"

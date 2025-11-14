@@ -16,7 +16,7 @@ services:
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
 
   sync:
-    build: ./populator    # folder with your Dockerfile + sync.py
+    build: ./sync    # folder with your Dockerfile + sync.py
     container_name: sync
     depends_on:
       - mongo
