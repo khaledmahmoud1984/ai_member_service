@@ -1,17 +1,16 @@
 # ai_member_service
-
 Web service that answers questions based on the message exchanges with its members. It uses LLM(s) to infer answers from message texts.
 
 
 High-Level Description:
-The query might include one or more users. Answer the questions is divided into multiple steps
+The query might include one or more users. Inferring the answer is divided into multiple steps
 
-1. Ask an LLM model to infer the users mentioned in the questions
+1. Ask an LLM model to infer the users mentioned in the questions.
 2. From the datastore, fetch all messages related to those users.
 3. Calculate an embedding for the question text
-4. Compute the cosine similarity with each retrieved question and order in descending order
-5. Pick the top 30.
-6. Feed the top 30 messages with the question to the LLM model
+4. Compute the cosine similarity between the question and each fetched message
+5. Pick the top 30 messages.
+6. Feed the top 30 messages along with the question to the LLM model
 
 
 Design Details:
@@ -31,11 +30,11 @@ Example Service Invocation: http://localhost:7777/ask?question=who%20is%20vikram
 Answer:	{"answer":"Based on the provided messages, Vikram is an art consultant who requests various services such as chefs, personal shoppers, and more. However, his current location is not specified in any of the messages."}
 
 Assumptions Made:
-If the API had new messages, it will always be appended to the end of the return list
+Any new messages will be appended to the end of the list returned by the source API service.
 
 Future:
 A question like who are the users that are interested in leaving Portland, Oregon?
-Current, the API does not support this. A username has to be extracted from the question. A modification is modify the prompt
+Current, the API does not support this. A username has to be extracted from the question. Future plan is to modify the prompt
 so that it can explicity say general and accordingly the code will fetch all users
 
 
