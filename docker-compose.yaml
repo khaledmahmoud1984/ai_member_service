@@ -19,8 +19,10 @@ services:
     build: ./sync    # folder with your Dockerfile + sync.py
     container_name: sync
     depends_on:
-      - mongo
-      - ollama
+      mongo:
+        condition: service_started
+      ollama:
+        condition: service_healthy
     environment:
       MONGO_URI: "mongodb://synchuser:synchuser@mongo:27017/messagesdb?authSource=messagesdb"
       MEMBERS_URL: "https://november7-730026606190.europe-west1.run.app/messages/"
@@ -29,23 +31,22 @@ services:
       PYTHONUNBUFFERED: "1"
 
   ollama:
-    image: ollama/ollama:latest
+    build: ./ollama
     container_name: ollama
     restart: unless-stopped
-    entrypoint: ["/usr/local/bin/start.sh"]
     ports:
       - "11434:11434"
     volumes:
-      - ./start.sh:/usr/local/bin/start.sh:ro
       - ollama:/root/.ollama
-    command: ["bash","-lc","bash /usr/local/bin/start.sh"]
 
   rest:
     build: ./rest
     container_name: rest
     depends_on:
-      - mongo
-      - ollama
+      mongo:
+        condition: service_started
+      ollama:
+        condition: service_healthy
     ports:
       - "7777:7777"
     environment:

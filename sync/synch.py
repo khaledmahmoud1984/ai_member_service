@@ -104,7 +104,6 @@ def synch():
     db.message.insert_many(items)
 
 
-time.sleep(240)
 while True:
     synch()
     time.sleep(interval)

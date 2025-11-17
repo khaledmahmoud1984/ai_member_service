@@ -12,6 +12,7 @@ members_url=os.getenv("MEMBERS_URL","https://november7-730026606190.europe-west1
 
 instruction="Find the person name where are asking about in [%s]"
 
+model_name=os.getenv("MODEL_NAME","qwen2.5:7b-instruct")
 api_chat_url=os.getenv("CHAT_URL","http://localhost:11434/api/chat")
 api_embeddings_url=os.getenv("EMBEDDINGS_URL","http://localhost:11434/api/embeddings")
 api_embedding_name=os.getenv("EMBEDDINGS_NAME","mxbai-embed-large")
@@ -30,7 +31,7 @@ def cosine_similarity(a, b):
 
 def find_name(question):
     req_json={
-            "model":"qwen2.5:7b-instruct",
+            "model":model_name,
             "stream":False,
             "messages": [
                 {"role":"system","content":"Extract the person name(s) mentioned in the question. Return only the names, comma-separated. Remove possessive apostrophes"},
