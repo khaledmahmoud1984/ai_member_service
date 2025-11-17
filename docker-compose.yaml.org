@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: messagesdb
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+
+  sync:
+    build: ./sync    # folder with your Dockerfile + sync.py
+    container_name: sync
+    depends_on:
+      mongo:
+        condition: service_started
+      ollama:
+        condition: service_healthy
+    environment:
+      MONGO_URI: "mongodb://synchuser:synchuser@mongo:27017/messagesdb?authSource=messagesdb"
+      MEMBERS_URL: "https://november7-730026606190.europe-west1.run.app/messages/"
+      SYNC_INTERVAL: "60" 
+      EMBEDDINGS_URL: "http://ollama:11434/api/embeddings"
+      PYTHONUNBUFFERED: "1"
+
+  ollama:
+    build: ./ollama
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+
+  rest:
+    build: ./rest
+    container_name: rest
+    depends_on:
+      mongo:
+        condition: service_started
+      ollama:
+        condition: service_healthy
+    ports:
+      - "7777:7777"
+    environment:
+      MONGO_URI: "mongodb://apiuser:apiuser@mongo:27017/messagesdb?authSource=messagesdb"
+      MEMBERS_URL: "https://november7-730026606190.europe-west1.run.app/messages/"
+      EMBEDDINGS_URL: "http://ollama:11434/api/embeddings"
+      CHAT_URL: "http://ollama:11434/api/chat"
+
+volumes:
+  mongo_data:
+  ollama:
+
